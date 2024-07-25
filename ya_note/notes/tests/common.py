@@ -13,29 +13,40 @@ class FixturesForTests(TestCase):
 
     @classmethod
     def setUpTestData(cls):
-        cls.author = User.objects.create(username='Автор')
+        cls.author = User.objects.create(username='author')
+        cls.non_author = User.objects.create(username='non_author')
         cls.author_client = Client()
+        cls.non_author_client = Client()
         cls.author_client.force_login(cls.author)
-        cls.reader = User.objects.create(username='Читатель')
+        cls.non_author_client.force_login(cls.non_author)
+        cls.reader = User.objects.create(username='reader')
         cls.reader_client = Client()
         cls.reader_client.force_login(cls.reader)
         cls.note = Note.objects.create(
-            title='Заголовок',
-            text='Текст',
+            title='Test Note',
+            text='This is a test note',
             author=cls.author,
             slug=NOTE_SLUG,
         )
-        cls.form_data = {'title': 'Заголовок',
-                         'text': 'Текст',
-                         'slug': NOTE_SLUG}
+        cls.form_data = {
+            "title": "Новый заголовок",
+            "text": "Новый текст",
+            "slug": "New_note_slug",
+        }
         cls.form_data_edited = {
             'title': 'Новый заголовок',
             'text': 'Новый текст',
             'slug': 'New_note_slug'
         }
+        cls.LIST_URL = reverse('notes:list')
+        cls.ADD_URL = reverse('notes:add')
+        cls.SUCCESS_URL = reverse('notes:success')
+        cls.EDIT_URL = reverse('notes:edit', args=[cls.note.slug])
+        cls.DELETE_URL = reverse('notes:delete', args=[cls.note.slug])
+        cls.LOGIN_URL = reverse('users:login')
 
 
-class Routes:
+class TestURLs:
     URL_ADD = reverse('notes:add')
     URL_DETAIL = reverse('notes:detail', args=[NOTE_SLUG])
     URL_EDIT = reverse('notes:edit', args=[NOTE_SLUG])
@@ -47,26 +58,3 @@ class Routes:
     URL_SIGNUP = reverse('users:signup')
     URL_SUCCESS = reverse('notes:success')
     LOGIN_URL = reverse('users:login')
-
-
-class TestNote(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        cls.author = User.objects.create(username='author')
-        cls.non_author = User.objects.create(username='non_author')
-        cls.author_client = Client()
-        cls.non_author_client = Client()
-        cls.author_client.force_login(cls.author)
-        cls.non_author_client.force_login(cls.non_author)
-        cls.note = Note.objects.create(
-            title='Test Note',
-            text='This is a test note',
-            slug='test-note',
-            author=cls.author
-        )
-        cls.LIST_URL = reverse('notes:list')
-        cls.ADD_URL = reverse('notes:add')
-        cls.SUCCESS_URL = reverse('notes:success')
-        cls.EDIT_URL = reverse('notes:edit', args=[cls.note.slug])
-        cls.DELETE_URL = reverse('notes:delete', args=[cls.note.slug])
-        cls.LOGIN_URL = reverse('users:login')

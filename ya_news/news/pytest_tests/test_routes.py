@@ -1,25 +1,55 @@
+import pytest
 from http import HTTPStatus
 
-import pytest  # type: ignore
+from django.urls import reverse
+from pytest_django.asserts import assertRedirects
+
+pytestmark = pytest.mark.django_db
 
 
-def test_pages_availability(client, public_urls):
-    for url in public_urls:
-        response = client.get(url)
-        assert response.status_code == HTTPStatus.OK
+@pytest.mark.parametrize(
+    "name", ("news:home", "users:login", "users:logout", "users:signup")
+)
+def test_pages_availability_for_anonymous_user(client, name):
+    url = reverse(name)
+    response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
 
 
-@pytest.mark.parametrize('user_fixture, expected_status, redirect', [
-    ('author_client', HTTPStatus.OK, False),
-    ('reader_client', HTTPStatus.NOT_FOUND, False),
-    ('client', HTTPStatus.FOUND, True)
-])
-def test_availability_for_comment_edit_and_delete(
-    user_fixture, expected_status, redirect, private_urls, request, login_url
+def test_detail_page_availability(news_url, client):
+    response = client.get(news_url)
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.parametrize(
+    "parametrized_client, expected_status",
+    (
+        (pytest.lazy_fixture("author_client"), HTTPStatus.OK),
+        (pytest.lazy_fixture("not_author_client"), HTTPStatus.NOT_FOUND),
+    ),
+)
+@pytest.mark.parametrize(
+    "get_url",
+    (
+        pytest.lazy_fixture("edit_url"),
+        pytest.lazy_fixture("edit_url"),
+    ),
+)
+def test_edit_delete_comment_for_different_users(
+    parametrized_client, get_url, expected_status
 ):
-    user = request.getfixturevalue(user_fixture)
-    for url in private_urls:
-        response = user.get(url)
-        assert response.status_code == expected_status
-        if redirect:
-            assert response.url == f'{login_url}?next={url}'
+    response = parametrized_client.get(get_url)
+    assert response.status_code == expected_status
+
+
+@pytest.mark.parametrize(
+    "get_url",
+    (
+        pytest.lazy_fixture("get_url_comment_edit"),
+        pytest.lazy_fixture("get_url_comment_delete"),
+    ),
+)
+def redirect_to_login_from_comments(get_url, url_user_login, client):
+    expected_url = f"{url_user_login}?next={get_url}"
+    response = client.get(get_url)
+    assertRedirects(response, expected_url)
