@@ -1,44 +1,39 @@
-import pytest
-from django.conf import settings
+import pytest  # type: ignore
+from django.conf import settings  # type: ignore
+
+from news.forms import CommentForm
 
 
-@pytest.mark.django_db
-def test_news_count(create_news, client, home_url):
-    response = client.get(home_url)
-    object_list = response.context['object_list']
-    news_count = len(object_list)
+def test_news_count(client, home_url, news_list):
+    news_count = client.get(home_url).context['object_list'].count()
     assert news_count == settings.NEWS_COUNT_ON_HOME_PAGE
 
 
-@pytest.mark.django_db
-def test_news_order(create_news, client, home_url):
-    response = client.get(home_url)
-    object_list = response.context['object_list']
-    all_dates = [news.date for news in object_list]
+def test_news_order(client, home_url, news_list):
+    news_objects = client.get(home_url).context['object_list']
+    all_dates = [news.date for news in news_objects]
     sorted_dates = sorted(all_dates, reverse=True)
     assert all_dates == sorted_dates
 
 
-@pytest.mark.django_db
-@pytest.mark.usefixtures('create_comment')
-def test_comments_order(author_client, news_url, news):
-    response = author_client.get(news_url)
-    assert 'news' in response.context
+def test_comments_order(client, detail_url, comments):
+    response = client.get(detail_url)
     news = response.context['news']
     all_comments = news.comment_set.all()
-    all_dates = [comment.created for comment in all_comments]
-    sorted_comments = sorted(all_dates, reverse=False)
-    assert all_dates == sorted_comments
+    all_timestamps = [comment.created for comment in all_comments]
+    sorted_timestamps = sorted(all_timestamps)
+    assert all_timestamps == sorted_timestamps
 
 
-@pytest.mark.parametrize(
-    'user, status',
-    (
-        (pytest.lazy_fixture('client'), False),
-        (pytest.lazy_fixture('author_client'), True)
-    ),
-)
-def test_anonymous_client_has_no_form(user, status, news_url):
-    response = user.get(news_url)
-    result = 'form' in response.context
-    assert result == status
+@pytest.mark.parametrize('user_fixture, expected_form', [
+    ('author_client', True),
+    ('client', False)
+])
+def test_comment_form_presence(
+    detail_url, user_fixture, expected_form, request
+):
+    user = request.getfixturevalue(user_fixture)
+    response = user.get(detail_url)
+    assert ('form' in response.context) == expected_form
+    if expected_form:
+        assert isinstance(response.context['form'], CommentForm)

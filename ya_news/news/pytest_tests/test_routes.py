@@ -1,53 +1,25 @@
 from http import HTTPStatus
-import pytest
-from django.urls import reverse
-from pytest_django.asserts import assertRedirects
+
+import pytest  # type: ignore
 
 
-@pytest.mark.parametrize(
-    'name, args',
-    (('news:home', None),
-     ('news:detail', pytest.lazy_fixture('pk_news')),
-     ('users:login', None),
-     ('users:logout', None),
-     ('users:signup', None),
-     )
-)
-@pytest.mark.django_db
-def test_pages_availability_anonymous_user(client, name, args):
-    url = reverse(name, args=args)
-    response = client.get(url)
-    assert response.status_code == HTTPStatus.OK
+def test_pages_availability(client, public_urls):
+    for url in public_urls:
+        response = client.get(url)
+        assert response.status_code == HTTPStatus.OK
 
 
-@pytest.mark.parametrize(
-    'parametrized_client, expected_status',
-    (
-        (pytest.lazy_fixture('reader_client'), HTTPStatus.NOT_FOUND),
-        (pytest.lazy_fixture('author_client'), HTTPStatus.OK)
-    ),
-)
-@pytest.mark.parametrize(
-    'name, args',
-    (('news:edit', pytest.lazy_fixture('pk_comment')),
-     ('news:delete', pytest.lazy_fixture('pk_comment')),),
-)
-def test_pages_availability_for_different_users(
-        parametrized_client, name, args, expected_status
+@pytest.mark.parametrize('user_fixture, expected_status, redirect', [
+    ('author_client', HTTPStatus.OK, False),
+    ('reader_client', HTTPStatus.NOT_FOUND, False),
+    ('client', HTTPStatus.FOUND, True)
+])
+def test_availability_for_comment_edit_and_delete(
+    user_fixture, expected_status, redirect, private_urls, request, login_url
 ):
-    url = reverse(name, args=args)
-    response = parametrized_client.get(url)
-    assert response.status_code == expected_status
-
-
-@pytest.mark.parametrize(
-    'name, args',
-    (('news:edit', pytest.lazy_fixture('pk_comment')),
-     ('news:delete', pytest.lazy_fixture('pk_comment')),),
-)
-def test_redirect_for_anonymous_client(client, name, args):
-    login_url = reverse('users:login')
-    url = reverse(name, args=args)
-    expected_url = f'{login_url}?next={url}'
-    response = client.get(url)
-    assertRedirects(response, expected_url)
+    user = request.getfixturevalue(user_fixture)
+    for url in private_urls:
+        response = user.get(url)
+        assert response.status_code == expected_status
+        if redirect:
+            assert response.url == f'{login_url}?next={url}'
