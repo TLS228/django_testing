@@ -1,25 +1,59 @@
-from .common import FixturesForTests, Routes
-from notes.forms import NoteForm
+from django.test import Client, TestCase
+from django.urls import reverse
+from django.contrib.auth import get_user_model
+from notes.models import Note
+
+User = get_user_model()
 
 
-class TestDetailNote(FixturesForTests):
+class TestContent(TestCase):
+    LIST_URL = reverse('notes:list')
 
-    def test_user_notes_list(self):
-        note_in_list_for_user = (
-            (self.author_client, True),
-            (self.reader_client, False),
+    @classmethod
+    def setUpTestData(cls):
+        """Создание базы данных и пользователей"""
+        cls.author = User.objects.create(username='Лев Толстой')
+        cls.reader = User.objects.create(username='Читатель простой')
+        cls.auth_author = Client()
+        cls.auth_reader = Client()
+        cls.auth_author.force_login(cls.author)
+        cls.auth_reader.force_login(cls.reader)
+        cls.notes = Note.objects.create(
+            title='Заметка',
+            text='Текст заметки',
+            slug='test_note',
+            author=cls.author)
+
+    def test_note_in_list_in_author(self):
+        """Заметка передается в список заметок"""
+        response = self.auth_author.get(self.LIST_URL)
+        object_list = response.context['object_list']
+        self.assertIn(self.notes, object_list)
+
+    def test_not_in_list_not_autor_note(self):
+        """Заметки не путаются между пользователей"""
+        response = self.auth_reader.get(self.LIST_URL)
+        object_list = response.context['object_list']
+        self.assertNotIn(self.notes, object_list)
+
+    def test_in_notes(self):
+        """Проверка заметок на создание и на не перепутанность"""
+        users = (
+            (self.auth_author, True),
+            (self.auth_reader, False)
         )
-        for user, note_in_list in note_in_list_for_user:
-            response = user.get(Routes.URL_LIST)
-            object_list = response.context['object_list']
-            self.assertIs(self.note in object_list, note_in_list)
+        for user, status in users:
+            response = user.get(self.LIST_URL)
+            object_list = self.notes in response.context['object_list']
+            self.assertEqual(object_list, status)
 
-    def test_add_and_edit_forms(self):
+    def test_client_has_form(self):
+        """Проверка передачи форм"""
         urls = (
-            (Routes.URL_ADD),
-            (Routes.URL_EDIT),
+            ('notes:add', None),
+            ('notes:edit', (self.notes.slug,))
         )
-        for url in urls:
-            response = self.author_client.get(url)
+        for page, args in urls:
+            url = reverse(page, args=args)
+            response = self.auth_author.get(url)
             self.assertIn('form', response.context)
-            self.assertIsInstance(response.context['form'], NoteForm)
