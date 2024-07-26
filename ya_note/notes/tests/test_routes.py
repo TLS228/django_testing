@@ -2,7 +2,6 @@ from http.client import FOUND, NOT_FOUND, OK
 
 from django.contrib.auth import get_user_model  # type: ignore
 
-
 from .common import FixturesForTests, TestURLs
 
 

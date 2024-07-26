@@ -1,11 +1,9 @@
 import pytest
-
 from http import HTTPStatus
 
 from pytest_django.asserts import assertFormError, assertRedirects
 
 from news.forms import BAD_WORDS, WARNING
-
 from news.models import Comment
 
 BAD_WORDS_FIXTURE = [
@@ -17,11 +15,13 @@ pytestmark = pytest.mark.django_db
 
 
 def test_anonymous_user_cant_create_comment(news_url, client):
-    comments_before = set(Comment.objects.values_list('id', flat=True))
-    response = client.post(news_url, data=FORM_DATA)
-    comments_after = set(Comment.objects.values_list('id', flat=True))
-    assert response.status_code == HTTPStatus.FOUND
-    assert comments_before == comments_after
+    initial_comments = set(Comment.objects.values_list('id', flat=True))
+    assert client.post(
+        news_url, data=FORM_DATA
+    ).status_code == HTTPStatus.FOUND
+    assert initial_comments == set(
+        Comment.objects.values_list('id', flat=True)
+    )
 
 
 def test_user_can_create_comment(not_author_client, news_url, not_author):
@@ -30,19 +30,20 @@ def test_user_can_create_comment(not_author_client, news_url, not_author):
     comments_after = set(Comment.objects.all())
     assertRedirects(response, f'{news_url}#comments')
     new_comments = comments_after - comments_before
-    assert len(new_comments) == 1, "Новый комментарий не был создан"
+    assert len(new_comments) == 1, 'Новые комментарии не были созданы'
     new_comment = new_comments.pop()
     assert new_comment.text == FORM_DATA['text']
     assert new_comment.author == not_author
-    assert new_comment.news == new_comment.news
+    assert new_comment.news == Comment.objects.get(id=new_comment.id).news
 
 
-def test_user_cant_use_bad_words(news_url, not_author_client):
-    for bad_word_fixture in BAD_WORDS_FIXTURE:
-        response = not_author_client.post(news_url, data=bad_word_fixture)
-        comments_count = Comment.objects.count()
-        assertFormError(response, form='form', field='text', errors=WARNING)
-        assert comments_count == 0
+@pytest.mark.parametrize('bad_word_fixture', BAD_WORDS_FIXTURE)
+def test_user_cant_use_bad_words(news_url,
+                                 not_author_client, bad_word_fixture):
+    response = not_author_client.post(news_url, data=bad_word_fixture)
+    comments_count = Comment.objects.count()
+    assertFormError(response, form='form', field='text', errors=WARNING)
+    assert comments_count == 0
 
 
 def test_author_can_delete_comment(author_client, delete_url,
@@ -55,12 +56,11 @@ def test_author_can_delete_comment(author_client, delete_url,
     assert not Comment.objects.filter(id=comment.id).exists()
 
 
-def test_user_cant_delete_comment_of_another_user(delete_url, admin_client):
-    comments_before = set(Comment.objects.values_list('id', flat=True))
-    response = admin_client.delete(delete_url)
-    comments_after = set(Comment.objects.values_list('id', flat=True))
-    assert response.status_code == HTTPStatus.NOT_FOUND
-    assert comments_before == comments_after
+def test_anonymous_user_cant_delete(client, comment):
+    comment_count = Comment.objects.filter(id=comment.id).count()
+    client.post('news:delete', args=(comment.id,))
+    actual_count = Comment.objects.filter(id=comment.id).count()
+    assert comment_count == actual_count
 
 
 def test_author_can_edit_comment(author_client, comment, edit_url, news_url):

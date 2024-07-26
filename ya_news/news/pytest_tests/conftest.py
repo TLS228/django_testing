@@ -3,9 +3,7 @@ import pytest
 from datetime import timedelta
 
 from django.utils import timezone
-
 from django.conf import settings
-
 from django.urls import reverse
 
 from django.test.client import Client
@@ -48,14 +46,14 @@ def news():
 @pytest.fixture
 def news_list():
     today = timezone.now()
-    News.objects.bulk_create([
+    News.objects.bulk_create(
         News(
             title=f'Новость {index}',
             text='Просто текст.)',
             date=today - timedelta(days=index),
         )
         for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
-    ])
+    )
 
 
 @pytest.fixture
@@ -94,9 +92,9 @@ def url_user_login():
 
 @pytest.fixture
 def redirect_edit_url(url_user_login, edit_url):
-    return f"{url_user_login}?next={edit_url}"
+    return f'{url_user_login}?next={edit_url}'
 
 
 @pytest.fixture
 def redirect_delete_url(url_user_login, delete_url):
-    return f"{url_user_login}?next={delete_url}"
+    return f'{url_user_login}?next={delete_url}'

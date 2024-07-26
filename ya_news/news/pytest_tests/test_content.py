@@ -1,5 +1,4 @@
 import pytest
-
 from django.conf import settings
 
 pytestmark = pytest.mark.django_db
@@ -24,20 +23,16 @@ def test_comments_order(news_url, client):
     assert 'news' in response.context
     news = response.context['news']
     comments = news.comment_set.all()
-    assert list(comments.values_list('created', flat=True)) == list(
-        comments.values_list('created', flat=True).order_by('created'))
+    if comments.count() > 1:
+        created_dates = list(comments.values_list('created', flat=True))
+        assert created_dates == sorted(created_dates)
 
 
-@pytest.mark.parametrize(
-    'parametrized_client, expected_status',
-    (
-        (pytest.lazy_fixture('client'), False),
-        (pytest.lazy_fixture('author_client'), True),
-    ),
-)
-def test_pages_contains_form(parametrized_client, expected_status, news_url):
-    response = parametrized_client.get(news_url)
-    form_in_context = 'form' in response.context
-    assert form_in_context == expected_status
-    if form_in_context:
-        assert 'form' in response.context
+def test_form_presence_for_anonymous_client(client, news_url):
+    response = client.get(news_url)
+    assert 'form' not in response.context
+
+
+def test_form_presence_for_author_client(author_client, news_url):
+    response = author_client.get(news_url)
+    assert 'form' in response.context

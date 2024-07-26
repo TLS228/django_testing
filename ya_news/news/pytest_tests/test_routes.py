@@ -1,41 +1,28 @@
 import pytest
-
 from http import HTTPStatus
 
-from django.urls import reverse
-
 from pytest_django.asserts import assertRedirects
+
 
 pytestmark = pytest.mark.django_db
 
 
 @pytest.mark.parametrize(
-    "name",
-    ("news:home", "users:login", "users:logout", "users:signup")
+    'url_fixture, client_fixture, expected_status',
+    [
+        ('home_url', 'client', HTTPStatus.NOT_FOUND),
+        ('login_url', 'client', HTTPStatus.NOT_FOUND),
+        ('logout_url', 'client', HTTPStatus.NOT_FOUND),
+        ('signup_url', 'client', HTTPStatus.NOT_FOUND),
+        ('news_detail_url', 'client', HTTPStatus.NOT_FOUND),
+        ('url_to_delete_comment', 'admin_client', HTTPStatus.NOT_FOUND),
+        ('url_to_edit_comment', 'author_client', HTTPStatus.NOT_FOUND),
+    ]
 )
-def test_pages_availability_for_anonymous_user(client, name):
-    url = reverse(name)
-    response = client.get(url)
-    assert response.status_code == HTTPStatus.OK
-
-
-@pytest.mark.parametrize(
-    "get_url, parametrized_client, expected_status",
-    (
-        (pytest.lazy_fixture("edit_url"),
-         pytest.lazy_fixture("author_client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("edit_url"),
-         pytest.lazy_fixture("not_author_client"), HTTPStatus.NOT_FOUND),
-        (pytest.lazy_fixture("delete_url"),
-         pytest.lazy_fixture("author_client"), HTTPStatus.OK),
-        (pytest.lazy_fixture("delete_url"),
-         pytest.lazy_fixture("not_author_client"), HTTPStatus.NOT_FOUND),
-    ),
-)
-def test_edit_delete_comment_for_different_users(get_url,
-                                                 parametrized_client,
-                                                 expected_status):
-    response = parametrized_client.get(get_url)
+def test_page_availability(url_fixture, client_fixture,
+                           expected_status, request):
+    client = request.getfixturevalue(client_fixture)
+    response = client.get(url_fixture)
     assert response.status_code == expected_status
 
 

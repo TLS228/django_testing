@@ -21,7 +21,7 @@ class TestNotesContent(FixturesForTests, TestURLs):
         )
 
     def test_form_presence_on_pages(self):
-        for url in [self.ADD_URL, self.EDIT_URL]:
+        for url in [self.ADD_URL, self.URL_EDIT]:
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertIn('form', response.context)
