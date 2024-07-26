@@ -36,7 +36,7 @@ class FixturesForTests(TestCase):
 
 
 class TestURLs:
-    URL_ADD = reverse('notes:add')
+    ADD_URL = reverse('notes:add')
     URL_DETAIL = reverse('notes:detail', args=[NOTE_SLUG])
     URL_EDIT = reverse('notes:edit', args=[NOTE_SLUG])
     URL_HOME = reverse('notes:home')
@@ -48,8 +48,6 @@ class TestURLs:
     URL_SUCCESS = reverse('notes:success')
     LOGIN_URL = reverse('users:login')
     LIST_URL = reverse('notes:list')
-    ADD_URL = reverse('notes:add')
     SUCCESS_URL = reverse('notes:success')
     EDIT_URL = reverse('notes:edit', args=[NOTE_SLUG])
     DELETE_URL = reverse('notes:delete', args=[NOTE_SLUG])
-    LOGIN_URL = reverse('users:login')

@@ -9,56 +9,41 @@ from .common import FixturesForTests, TestURLs
 
 class TestNoteCreation(FixturesForTests, TestURLs):
 
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.expected_url = f"{cls.LOGIN_URL}?next={cls.ADD_URL}"
+
     def test_user_can_create_note(self):
-        notes_before = list(Note.objects.values_list('id', flat=True))
-        response = self.author_client.post(self.ADD_URL, data=self.form_data)
+        self.create_note_and_check_fields(self.form_data,
+                                          self.form_data["slug"])
+
+    def create_note_and_check_fields(self, form_data, expected_slug=None):
+        Note.objects.all().delete()
+        response = self.author_client.post(self.ADD_URL, data=form_data)
         self.assertRedirects(response, self.SUCCESS_URL)
-        notes_after = list(Note.objects.values_list('id', flat=True))
-        new_note_id = set(notes_after) - set(notes_before)
-        self.assertEqual(len(new_note_id), 1)
-        new_note = Note.objects.get(id=new_note_id.pop())
-        self.assertEqual(new_note.title, self.form_data["title"])
-        self.assertEqual(new_note.text, self.form_data["text"])
-        self.assertEqual(new_note.slug, self.form_data["slug"])
-        self.assertEqual(new_note.author, self.author)
+        note = Note.objects.latest('id')
+        self.assertEqual(note.title, form_data["title"])
+        self.assertEqual(note.text, form_data["text"])
+        self.assertEqual(note.slug,
+                         expected_slug or slugify(form_data["title"]))
+        self.assertEqual(note.author, self.author)
 
     def test_anonymous_user_cant_create_note(self):
-        notes_before = set(Note.objects.values_list('id', flat=True))
-        expected_url = f"{self.LOGIN_URL}?next={self.ADD_URL}"
+        notes = set(Note.objects.values_list('id', flat=True))
         response = self.client.post(self.ADD_URL, data=self.form_data)
-        self.assertRedirects(response, expected_url)
-        notes_after = set(Note.objects.values_list('id', flat=True))
-        self.assertEqual(notes_before, notes_after)
+        self.assertRedirects(response, self.expected_url)
+        self.assertEqual(notes, set(Note.objects.values_list('id', flat=True)))
 
     def test_not_unique_slug(self):
-        notes_count_before = Note.objects.count()
+        notes_before = list(Note.objects.values_list('id', flat=True))
         self.form_data["slug"] = self.note.slug
         response = self.author_client.post(self.ADD_URL, data=self.form_data)
-        notes_count_after = Note.objects.count()
-        self.assertEqual(notes_count_before, notes_count_after)
-        note = Note.objects.get(id=self.note.id)
-        self.assertEqual(note.title, self.note.title)
-        self.assertEqual(note.text, self.note.text)
-        self.assertEqual(note.slug, self.note.slug)
-        self.assertEqual(note.author, self.note.author)
+        notes_after = list(Note.objects.values_list('id', flat=True))
+        self.assertEqual(notes_before, notes_after)
         self.assertFormError(response,
                              "form", "slug",
                              self.note.slug + WARNING)
-
-    def create_note_and_check_fields(self, client, url, form_data,
-                                     expected_redirect_url):
-        response = client.post(url, data=form_data)
-        self.assertRedirects(response, expected_redirect_url)
-        self.assertEqual(Note.objects.count(), 1)
-        note = Note.objects.get()
-        self.assertEqual(note.title, form_data["title"])
-        self.assertEqual(note.text, form_data["text"])
-        self.assertEqual(
-            note.slug,
-            slugify(form_data["title"])
-            if "slug" not in form_data else form_data["slug"]
-        )
-        self.assertEqual(note.author, self.author)
 
     def test_author_can_edit_note(self):
         response = self.author_client.post(self.EDIT_URL, self.form_data)
@@ -70,12 +55,10 @@ class TestNoteCreation(FixturesForTests, TestURLs):
         self.assertEqual(note_after_edit.author, self.note.author)
 
     def test_empty_slug(self):
-        Note.objects.all().delete()
         form_data = self.form_data.copy()
-        form_data.pop("slug")
-        self.create_note_and_check_fields(self.author_client,
-                                          self.ADD_URL, form_data,
-                                          self.SUCCESS_URL)
+        del form_data["slug"]
+        self.create_note_and_check_fields(form_data,
+                                          slugify(form_data["title"]))
 
     def test_other_user_cant_edit_note(self):
         response = self.non_author_client.post(self.EDIT_URL, self.form_data)

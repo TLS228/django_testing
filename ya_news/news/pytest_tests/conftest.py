@@ -1,9 +1,13 @@
 import pytest
+
 from datetime import timedelta
+
 from django.utils import timezone
 
 from django.conf import settings
+
 from django.urls import reverse
+
 from django.test.client import Client
 
 from news.models import Comment, News
@@ -44,15 +48,14 @@ def news():
 @pytest.fixture
 def news_list():
     today = timezone.now()
-    all_news = [
+    News.objects.bulk_create([
         News(
             title=f'Новость {index}',
             text='Просто текст.)',
             date=today - timedelta(days=index),
         )
         for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
-    ]
-    News.objects.bulk_create(all_news)
+    ])
 
 
 @pytest.fixture
@@ -82,6 +85,11 @@ def edit_url(comment):
 @pytest.fixture
 def delete_url(comment):
     return reverse('news:delete', args=(comment.id,))
+
+
+@pytest.fixture
+def url_user_login():
+    return reverse('login')
 
 
 @pytest.fixture
