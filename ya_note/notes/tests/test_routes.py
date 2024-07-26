@@ -46,10 +46,10 @@ class TestRoutes(FixturesForTests):
             TestURLs.URL_DELETE,
         )
         login_url = TestURLs.URL_LOGIN
+        redirect_urls = {url: f'{login_url}?next={url}' for url in urls}
         for url in urls:
-            redirect_url = f'{login_url}?next={url}'
             with self.subTest(url=url):
                 self.assertRedirects(
                     self.client.get(url),
-                    redirect_url
+                    redirect_urls[url]
                 )

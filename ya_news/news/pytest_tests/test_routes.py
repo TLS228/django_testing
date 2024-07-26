@@ -16,11 +16,6 @@ def test_pages_availability_for_anonymous_user(client, name):
     assert response.status_code == HTTPStatus.OK
 
 
-def test_detail_page_availability(news_url, client):
-    response = client.get(news_url)
-    assert response.status_code == HTTPStatus.OK
-
-
 @pytest.mark.parametrize(
     "parametrized_client, expected_status",
     (
@@ -32,7 +27,7 @@ def test_detail_page_availability(news_url, client):
     "get_url",
     (
         pytest.lazy_fixture("edit_url"),
-        pytest.lazy_fixture("edit_url"),
+        pytest.lazy_fixture("delete_url"),
     ),
 )
 def test_edit_delete_comment_for_different_users(
@@ -43,13 +38,14 @@ def test_edit_delete_comment_for_different_users(
 
 
 @pytest.mark.parametrize(
-    "get_url",
+    "get_url, expected_redirect_url",
     (
-        pytest.lazy_fixture("get_url_comment_edit"),
-        pytest.lazy_fixture("get_url_comment_delete"),
+        (pytest.lazy_fixture("get_url_comment_edit"),
+         pytest.lazy_fixture("redirect_edit_url")),
+        (pytest.lazy_fixture("get_url_comment_delete"),
+         pytest.lazy_fixture("redirect_delete_url")),
     ),
 )
-def redirect_to_login_from_comments(get_url, url_user_login, client):
-    expected_url = f"{url_user_login}?next={get_url}"
+def redirect_to_login_from_comments(get_url, expected_redirect_url, client):
     response = client.get(get_url)
-    assertRedirects(response, expected_url)
+    assertRedirects(response, expected_redirect_url)

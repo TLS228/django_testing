@@ -1,26 +1,27 @@
 from notes.forms import NoteForm
-from .common import FixturesForTests
+from .common import FixturesForTests, TestURLs
 
 
-class TestNotesContent(FixturesForTests):
+class TestNotesContent(FixturesForTests, TestURLs):
 
     def test_note_visibility_for_author(self):
-        response = self.author_client.get(self.LIST_URL)
+        response = self.author_client.get(self.URL_LIST)
         notes_list = response.context['object_list']
-        self.assertIn(self.note, notes_list)
-        displayed_note = notes_list.get(id=self.note.id)
-        self.assertEqual(displayed_note.title, self.note.title)
-        self.assertEqual(displayed_note.text, self.note.text)
-        self.assertEqual(displayed_note.slug, self.note.slug)
-        self.assertEqual(displayed_note.author, self.note.author)
+        self.assertEqual(notes_list.filter(id=self.note.id).count(), 1)
+        note_in_list = notes_list.get(id=self.note.id)
+        self.assertEqual(note_in_list.title, self.note.title)
+        self.assertEqual(note_in_list.text, self.note.text)
+        self.assertEqual(note_in_list.slug, self.note.slug)
+        self.assertEqual(note_in_list.author, self.note.author)
 
     def test_note_visibility_for_non_author(self):
-        response = self.non_author_client.get(self.LIST_URL)
-        notes_list = response.context['object_list']
-        self.assertNotIn(self.note, notes_list)
+        self.assertNotIn(
+            self.note,
+            self.non_author_client.get(self.URL_LIST).context['object_list']
+        )
 
     def test_form_presence_on_pages(self):
-        for url in [self.ADD_URL, self.EDIT_URL]:
+        for url in [self.URL_ADD, self.EDIT_URL]:
             with self.subTest(url=url):
                 response = self.author_client.get(url)
                 self.assertIn('form', response.context)

@@ -6,7 +6,6 @@ from django.conf import settings
 from django.urls import reverse
 from django.test.client import Client
 
-from news.forms import BAD_WORDS
 from news.models import Comment, News
 
 
@@ -45,14 +44,14 @@ def news():
 @pytest.fixture
 def news_list():
     today = timezone.now()
-    all_news = []
-    for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1):
-        one_news = News(
+    all_news = [
+        News(
             title=f'Новость {index}',
             text='Просто текст.)',
             date=today - timedelta(days=index),
         )
-        all_news.append(one_news)
+        for index in range(settings.NEWS_COUNT_ON_HOME_PAGE + 1)
+    ]
     News.objects.bulk_create(all_news)
 
 
@@ -86,12 +85,10 @@ def delete_url(comment):
 
 
 @pytest.fixture
-def bad_words_fixture():
-    return {'text': f'Текст раз, {BAD_WORDS[0]}, и дальше'}
+def redirect_edit_url(url_user_login, edit_url):
+    return f"{url_user_login}?next={edit_url}"
 
 
 @pytest.fixture
-def form_data():
-    return {
-        'text': 'Новый',
-    }
+def redirect_delete_url(url_user_login, delete_url):
+    return f"{url_user_login}?next={delete_url}"

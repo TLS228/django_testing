@@ -33,17 +33,6 @@ class FixturesForTests(TestCase):
             "text": "Новый текст",
             "slug": "New_note_slug",
         }
-        cls.form_data_edited = {
-            'title': 'Новый заголовок',
-            'text': 'Новый текст',
-            'slug': 'New_note_slug'
-        }
-        cls.LIST_URL = reverse('notes:list')
-        cls.ADD_URL = reverse('notes:add')
-        cls.SUCCESS_URL = reverse('notes:success')
-        cls.EDIT_URL = reverse('notes:edit', args=[cls.note.slug])
-        cls.DELETE_URL = reverse('notes:delete', args=[cls.note.slug])
-        cls.LOGIN_URL = reverse('users:login')
 
 
 class TestURLs:
@@ -57,4 +46,10 @@ class TestURLs:
     URL_LIST = reverse('notes:list')
     URL_SIGNUP = reverse('users:signup')
     URL_SUCCESS = reverse('notes:success')
+    LOGIN_URL = reverse('users:login')
+    LIST_URL = reverse('notes:list')
+    ADD_URL = reverse('notes:add')
+    SUCCESS_URL = reverse('notes:success')
+    EDIT_URL = reverse('notes:edit', args=[NOTE_SLUG])
+    DELETE_URL = reverse('notes:delete', args=[NOTE_SLUG])
     LOGIN_URL = reverse('users:login')
