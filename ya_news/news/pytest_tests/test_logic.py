@@ -15,26 +15,27 @@ pytestmark = pytest.mark.django_db
 
 
 def test_anonymous_user_cant_create_comment(news_url, client):
-    initial_comments = set(Comment.objects.values_list('id', flat=True))
+    comments = set(Comment.objects.values_list('id', flat=True))
     assert client.post(
         news_url, data=FORM_DATA
     ).status_code == HTTPStatus.FOUND
-    assert initial_comments == set(
+    assert comments == set(
         Comment.objects.values_list('id', flat=True)
     )
 
 
-def test_user_can_create_comment(not_author_client, news_url, not_author):
+def test_user_can_create_comment(not_author_client, news_url,
+                                 not_author, news):
     comments_before = set(Comment.objects.all())
     response = not_author_client.post(news_url, data=FORM_DATA)
     comments_after = set(Comment.objects.all())
     assertRedirects(response, f'{news_url}#comments')
     new_comments = comments_after - comments_before
-    assert len(new_comments) == 1, 'Новые комментарии не были созданы'
+    assert len(new_comments) == 1
     new_comment = new_comments.pop()
     assert new_comment.text == FORM_DATA['text']
     assert new_comment.author == not_author
-    assert new_comment.news == Comment.objects.get(id=new_comment.id).news
+    assert new_comment.news == news
 
 
 @pytest.mark.parametrize('bad_word_fixture', BAD_WORDS_FIXTURE)
@@ -57,10 +58,12 @@ def test_author_can_delete_comment(author_client, delete_url,
 
 
 def test_anonymous_user_cant_delete(client, comment):
-    comment_count = Comment.objects.filter(id=comment.id).count()
+    comments_before = list(Comment.objects.values_list('id', 'text',
+                                                       'author', 'news'))
     client.post('news:delete', args=(comment.id,))
-    actual_count = Comment.objects.filter(id=comment.id).count()
-    assert comment_count == actual_count
+    comments_after = list(Comment.objects.values_list('id', 'text',
+                                                      'author', 'news'))
+    assert comments_before == comments_after
 
 
 def test_author_can_edit_comment(author_client, comment, edit_url, news_url):

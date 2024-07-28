@@ -28,15 +28,14 @@ class TestNoteCreation(FixturesForTests, TestURLs):
     def test_anonymous_user_cant_create_note(self):
         notes = set(Note.objects.values_list('id', flat=True))
         response = self.client.post(self.ADD_URL, data=self.form_data)
-        self.assertRedirects(response, self.expected_url)
+        self.assertRedirects(response, self.get_expected_url())
         self.assertEqual(notes, set(Note.objects.values_list('id', flat=True)))
 
     def test_not_unique_slug(self):
-        notes_before = set(Note.objects.values_list('id', flat=True))
+        notes = set(Note.objects.values_list('id', flat=True))
         self.form_data["slug"] = self.note.slug
         response = self.author_client.post(self.ADD_URL, data=self.form_data)
-        notes_after = set(Note.objects.values_list('id', flat=True))
-        self.assertEqual(notes_before, notes_after)
+        self.assertEqual(notes, set(Note.objects.values_list('id', flat=True)))
         self.assertFormError(response, "form", "slug",
                              self.note.slug + WARNING)
 

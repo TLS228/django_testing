@@ -12,7 +12,6 @@ NOTE_SLUG = 'note_slug'
 class FixturesForTests(TestCase):
     @classmethod
     def setUpTestData(cls):
-        super().setUpTestData()
         cls.author = User.objects.create(username='author')
         cls.non_author = User.objects.create(username='non_author')
         cls.author_client = Client()
@@ -33,11 +32,9 @@ class FixturesForTests(TestCase):
             "text": "Новый текст",
             "slug": "New_note_slug",
         }
-        cls.expected_url = TestURLs.get_expected_url()
 
 
 class TestURLs:
-    NOTE_SLUG = 'note_slug'
     ADD_URL = reverse('notes:add')
     URL_DETAIL = reverse('notes:detail', args=[NOTE_SLUG])
     URL_EDIT = reverse('notes:edit', args=[NOTE_SLUG])
@@ -48,7 +45,20 @@ class TestURLs:
     URL_LIST = reverse('notes:list')
     URL_SIGNUP = reverse('users:signup')
     URL_SUCCESS = reverse('notes:success')
+    EXPECTED_URL = f"{URL_LOGIN}?next={ADD_URL}"
 
     @classmethod
     def get_expected_url(cls):
-        return f"{cls.URL_LOGIN}?next={cls.ADD_URL}"
+        return cls.EXPECTED_URL
+
+    @classmethod
+    def get_redirect_urls(cls):
+        urls = [
+            cls.URL_LIST,
+            cls.URL_SUCCESS,
+            cls.ADD_URL,
+            cls.URL_DETAIL,
+            cls.URL_EDIT,
+            cls.URL_DELETE,
+        ]
+        return {url: f'{cls.URL_LOGIN}?next={url}' for url in urls}

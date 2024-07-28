@@ -21,9 +21,9 @@ pytestmark = pytest.mark.django_db
 )
 def test_page_availability(url_fixture, client_fixture,
                            expected_status, request):
-    client = request.getfixturevalue(client_fixture)
-    response = client.get(url_fixture)
-    assert response.status_code == expected_status
+    assert request.getfixturevalue(client_fixture
+                                   ).get(url_fixture
+                                         ).status_code == expected_status
 
 
 @pytest.mark.parametrize(
