@@ -13,14 +13,20 @@ def test_news_count(news_list, home_url, client):
     )
 
 
+def test_news_order(home_url, client):
+    news_list = list(client.get(
+        home_url).context['object_list'].values('date'))
+    sorted_news_list = sorted(news_list, key=lambda x: x['date'], reverse=True)
+    assert news_list == sorted_news_list
+
+
 def test_comments_order(news_url, client):
     response = client.get(news_url)
     assert 'news' in response.context
     news = response.context['news']
     comments = news.comment_set.all()
-    if comments.count() > 1:
-        created_dates = list(comments.values_list('created', flat=True))
-        assert created_dates == sorted(created_dates)
+    created_dates = [comment.created for comment in comments]
+    assert created_dates == sorted(created_dates)
 
 
 def test_form_presence_for_anonymous_client(client, news_url):

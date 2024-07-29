@@ -58,11 +58,9 @@ def test_author_can_delete_comment(author_client, delete_url,
 
 
 def test_anonymous_user_cant_delete(client, comment):
-    comments_before = list(Comment.objects.values_list('id', 'text',
-                                                       'author', 'news'))
+    comments_before = Comment.objects.count()
     client.post('news:delete', args=(comment.id,))
-    comments_after = list(Comment.objects.values_list('id', 'text',
-                                                      'author', 'news'))
+    comments_after = Comment.objects.count()
     assert comments_before == comments_after
 
 

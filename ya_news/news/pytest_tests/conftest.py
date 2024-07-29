@@ -76,6 +76,21 @@ def news_url(news):
 
 
 @pytest.fixture
+def url_user_login():
+    return reverse('users:login')
+
+
+@pytest.fixture
+def url_logout():
+    return reverse('users:logout')
+
+
+@pytest.fixture
+def url_signup():
+    return reverse('users:signup')
+
+
+@pytest.fixture
 def edit_url(comment):
     return reverse('news:edit', args=(comment.id,))
 
@@ -83,11 +98,6 @@ def edit_url(comment):
 @pytest.fixture
 def delete_url(comment):
     return reverse('news:delete', args=(comment.id,))
-
-
-@pytest.fixture
-def url_user_login():
-    return reverse('login')
 
 
 @pytest.fixture

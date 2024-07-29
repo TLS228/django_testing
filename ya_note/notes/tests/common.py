@@ -45,20 +45,9 @@ class TestURLs:
     URL_LIST = reverse('notes:list')
     URL_SIGNUP = reverse('users:signup')
     URL_SUCCESS = reverse('notes:success')
-    EXPECTED_URL = f"{URL_LOGIN}?next={ADD_URL}"
-
-    @classmethod
-    def get_expected_url(cls):
-        return cls.EXPECTED_URL
-
-    @classmethod
-    def get_redirect_urls(cls):
-        urls = [
-            cls.URL_LIST,
-            cls.URL_SUCCESS,
-            cls.ADD_URL,
-            cls.URL_DETAIL,
-            cls.URL_EDIT,
-            cls.URL_DELETE,
-        ]
-        return {url: f'{cls.URL_LOGIN}?next={url}' for url in urls}
+    REDIRECT_ADD = f"{URL_LOGIN}?next={ADD_URL}"
+    REDIRECT_LIST = f"{URL_LOGIN}?next={URL_LIST}"
+    REDIRECT_SUCCESS = f"{URL_LOGIN}?next={URL_SUCCESS}"
+    REDIRECT_DETAIL = f"{URL_LOGIN}?next={URL_DETAIL}"
+    REDIRECT_EDIT = f"{URL_LOGIN}?next={URL_EDIT}"
+    REDIRECT_DELETE = f"{URL_LOGIN}?next={URL_DELETE}"

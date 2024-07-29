@@ -28,7 +28,7 @@ class TestNoteCreation(FixturesForTests, TestURLs):
     def test_anonymous_user_cant_create_note(self):
         notes = set(Note.objects.values_list('id', flat=True))
         response = self.client.post(self.ADD_URL, data=self.form_data)
-        self.assertRedirects(response, self.get_expected_url())
+        self.assertRedirects(response, self.REDIRECT_ADD)
         self.assertEqual(notes, set(Note.objects.values_list('id', flat=True)))
 
     def test_not_unique_slug(self):
