@@ -28,9 +28,9 @@ class FixturesForTests(TestCase):
             slug=NOTE_SLUG,
         )
         cls.form_data = {
-            "title": "Новый заголовок",
-            "text": "Новый текст",
-            "slug": "New_note_slug",
+            'title': 'Новый заголовок',
+            'text': 'Новый текст',
+            'slug': 'New_note_slug',
         }
 
 
