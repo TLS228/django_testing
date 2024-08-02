@@ -1,6 +1,6 @@
-import pytest
 from datetime import timedelta
 
+import pytest
 from django.utils import timezone
 from django.conf import settings
 from django.urls import reverse
@@ -106,3 +106,21 @@ def redirect_edit_url(url_user_login, edit_url):
 @pytest.fixture
 def redirect_delete_url(url_user_login, delete_url):
     return f'{url_user_login}?next={delete_url}'
+
+
+@pytest.fixture
+def comments(news, author):
+    return [
+        Comment.objects.create(
+            news=news, author=author, text='Первый комментарий',
+            created=timezone.now() - timezone.timedelta(days=1)
+        ),
+        Comment.objects.create(
+            news=news, author=author, text='Второй комментарий',
+            created=timezone.now()
+        ),
+        Comment.objects.create(
+            news=news, author=author, text='Третий комментарий',
+            created=timezone.now() - timezone.timedelta(days=2)
+        )
+    ]

@@ -1,8 +1,6 @@
 import pytest
 from django.conf import settings
-from django.utils import timezone
 
-from news.models import Comment
 from news.forms import CommentForm
 
 pytestmark = pytest.mark.django_db
@@ -22,18 +20,7 @@ def test_news_order(home_url, client):
     assert news_list == sorted_news_list
 
 
-@pytest.mark.django_db
-def test_comments_order(news_url, client, news, author):
-    Comment.objects.create(news=news,
-                           author=author, text='Первый комментарий',
-                           created=timezone.now() - timezone.timedelta(days=1))
-    Comment.objects.create(news=news,
-                           author=author, text='Второй комментарий',
-                           created=timezone.now())
-    Comment.objects.create(news=news,
-                           author=author, text='Третьй комментарий',
-                           created=timezone.now() - timezone.timedelta(days=2))
-
+def test_comments_order(news_url, client, news, comments):
     response = client.get(news_url)
     assert 'news' in response.context
     news = response.context['news']

@@ -59,12 +59,10 @@ def test_author_can_delete_comment(author_client, delete_url,
 
 
 def test_anonymous_user_cant_delete(client, comment):
-    comments_before = list(Comment.objects.values_list('id', flat=True))
-    client.post(reverse('news:delete', args=(comment.id,)))
-    comments_after = list(Comment.objects.values_list('id', flat=True))
-    assert len(comments_before) == len(comments_after)
-    assert comment.id in comments_after
-    assert comments_before == comments_after
+    assert Comment.objects.exists()
+    delete_url = reverse('news:delete', args=[comment.id])
+    client.delete(delete_url)
+    assert Comment.objects.exists()
 
 
 def test_author_can_edit_comment(author_client, comment, edit_url, news_url):
