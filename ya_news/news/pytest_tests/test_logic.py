@@ -58,11 +58,14 @@ def test_author_can_delete_comment(author_client, delete_url,
     assert not Comment.objects.filter(id=comment.id).exists()
 
 
-def test_anonymous_user_cant_delete(client, comment):
-    assert Comment.objects.exists()
+def test_anonymous_user_cant_delete(client, comment, news_url):
     delete_url = reverse('news:delete', args=[comment.id])
-    client.delete(delete_url)
-    assert Comment.objects.exists()
+    response = client.delete(delete_url)
+    assert response.status_code == HTTPStatus.FOUND
+    assert Comment.objects.filter(id=comment.id).exists()
+    assert comment.text == comment.text
+    assert comment.author == comment.author
+    assert comment.news == comment.news
 
 
 def test_author_can_edit_comment(author_client, comment, edit_url, news_url):
