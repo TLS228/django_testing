@@ -2,7 +2,6 @@ import pytest
 from http import HTTPStatus
 
 from pytest_django.asserts import assertFormError, assertRedirects
-from django.urls import reverse
 
 from news.forms import BAD_WORDS, WARNING
 from news.models import Comment
@@ -58,14 +57,14 @@ def test_author_can_delete_comment(author_client, delete_url,
     assert not Comment.objects.filter(id=comment.id).exists()
 
 
-def test_anonymous_user_cant_delete(client, comment, news_url):
-    delete_url = reverse('news:delete', args=[comment.id])
+def test_anonymous_user_cant_delete(client, comment, news_url, delete_url):
+    comment_initial = comment
     response = client.delete(delete_url)
     assert response.status_code == HTTPStatus.FOUND
     assert Comment.objects.filter(id=comment.id).exists()
-    assert comment.text == comment.text
-    assert comment.author == comment.author
-    assert comment.news == comment.news
+    assert comment.text == comment_initial.text
+    assert comment.author == comment_initial.author
+    assert comment.news == comment_initial.news
 
 
 def test_author_can_edit_comment(author_client, comment, edit_url, news_url):

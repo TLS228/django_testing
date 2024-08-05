@@ -20,7 +20,7 @@ def test_news_order(home_url, client):
     assert news_list == sorted_news_list
 
 
-def test_comments_order(news_url, client, news, comment):
+def test_comments_order(news_url, client, news, more_comments):
     response = client.get(news_url)
     assert 'news' in response.context
     news = response.context['news']

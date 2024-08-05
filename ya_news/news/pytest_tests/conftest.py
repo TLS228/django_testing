@@ -106,3 +106,14 @@ def redirect_edit_url(url_user_login, edit_url):
 @pytest.fixture
 def redirect_delete_url(url_user_login, delete_url):
     return f'{url_user_login}?next={delete_url}'
+
+
+@pytest.fixture
+def more_comments(author, news):
+    now = timezone.now()
+    for index in range(20):
+        comment = Comment.objects.create(
+            news=news, author=author, text=f'Tекст {index}'
+        )
+        comment.created = now + timedelta(days=index)
+        comment.save()
